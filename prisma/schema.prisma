@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  roles     UserRole[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 角色/权限表（如 admin、editor、viewer）
+model Role {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  // 路由/功能权限
+  permissions Permission[]
+  users      UserRole[]
+  pdfs       RolePDFPermission[]
+}
+
+// 用户-角色多对多
+model UserRole {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+  role   Role @relation(fields: [roleId], references: [id])
+  roleId Int
+}
+
+// 功能/路由权限表
+model Permission {
+  id    Int    @id @default(autoincrement())
+  code  String @unique // 如 "dashboard:view", "product:edit"
+  roles Role[]
+}
+
+// 产品PDF表
+model ProductPDF {
+  id             Int      @id @default(autoincrement())
+  name           String
+  pdfUrl         String
+  pageCount      Int
+  discountFactor Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  roles          RolePDFPermission[]
+}
+
+// 角色-产品PDF权限表
+model RolePDFPermission {
+  id          Int        @id @default(autoincrement())
+  role        Role       @relation(fields: [roleId], references: [id])
+  roleId      Int
+  productPDF  ProductPDF @relation(fields: [productPDFId], references: [id])
+  productPDFId Int
+  canEdit     Boolean    @default(false)
+}
