@@ -4,6 +4,9 @@ import Link from "next/link";
 import React, { useState } from "react";
 import InputGroup from "../FormElements/InputGroup";
 import { Checkbox } from "../FormElements/checkbox";
+import CryptoJS from "crypto-js";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 export default function SigninWithPassword() {
   const [data, setData] = useState({
@@ -13,6 +16,7 @@ export default function SigninWithPassword() {
   });
 
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setData({
@@ -21,15 +25,37 @@ export default function SigninWithPassword() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // You can remove this code block
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    const secret = process.env.NEXT_PUBLIC_DATA_ENCRYPT_SECRET || "default_secret";
+    const encrypted = CryptoJS.AES.encrypt(
+      JSON.stringify({ email: data.email, password: data.password }),
+      secret
+    ).toString();
+
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload: encrypted }),
+    });
+
+    setLoading(false);
+
+    if (res.ok) {
+      const result = await res.json();
+      // 写入 token 到 cookie
+      if (data.remember) {
+        Cookies.set("token", result.token, { expires: 30, path: "/" });
+      } else {
+        Cookies.set("token", result.token, { path: "/" });
+      }
+      router.push("/");
+    } else {
+      const result = await res.json();
+      alert(result.error || "登录失败");
+    }
   };
 
   return (
