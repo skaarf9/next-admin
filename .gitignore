@@ -37,3 +37,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Prisma 迁移锁文件
+prisma/migrations/migration_lock.toml

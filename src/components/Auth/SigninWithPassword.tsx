@@ -1,5 +1,5 @@
 "use client";
-import { EmailIcon, PasswordIcon } from "@/assets/icons";
+import { EmailIcon, PasswordIcon, EyeIcon, EyeOffIcon } from "@/assets/icons";
 import Link from "next/link";
 import React, { useState } from "react";
 import InputGroup from "../FormElements/InputGroup";
@@ -16,6 +16,7 @@ export default function SigninWithPassword() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,14 +73,24 @@ export default function SigninWithPassword() {
       />
 
       <InputGroup
-        type="password"
+        type={showPassword ? "text" : "password"}
         label="Password"
         className="mb-5 [&_input]:py-[15px]"
         placeholder="Enter your password"
         name="password"
         handleChange={handleChange}
         value={data.password}
-        icon={<PasswordIcon />}
+        icon={
+          <span
+            style={{ cursor: "pointer" }}
+            onClick={() => setShowPassword((v) => !v)}
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setShowPassword((v) => !v); }}
+            aria-label={showPassword ? "隐藏密码" : "显示密码"}
+          >
+            {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+          </span>
+        }
       />
 
       <div className="mb-6 flex items-center justify-between gap-2 py-2 font-medium">

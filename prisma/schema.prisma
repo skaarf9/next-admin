@@ -19,6 +19,9 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  phone     String?    // 新增：电话号码
+  avatar    String?    // 新增：头像URL
+  bio       String?    // 新增：简介
   roles     UserRole[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -70,4 +73,6 @@ model RolePDFPermission {
   productPDF  ProductPDF @relation(fields: [productPDFId], references: [id])
   productPDFId Int
   canEdit     Boolean    @default(false)
+
+  @@unique([roleId, productPDFId])
 }

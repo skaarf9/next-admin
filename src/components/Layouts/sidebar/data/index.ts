@@ -15,6 +15,26 @@ export const NAV_DATA = [
         ],
       },
       {
+        title: "Admin",
+        icon: Icons.HomeIcon,
+        items: [
+          {
+            title: "roles",
+            url: "/admin/roles",
+          },
+          {
+            title: "users",
+            url: "/admin/users",
+          },
+        ],
+      },
+      {
+        title: "PDF",
+        url: "/pdf",
+        icon: Icons.Alphabet,
+        items: [],
+      },
+      {
         title: "Calendar",
         url: "/calendar",
         icon: Icons.Calendar,

@@ -2,17 +2,48 @@
 
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import Image from "next/image";
-
-import { useState } from "react";
+import Cookies from "js-cookie";
+import { useEffect, useState } from "react";
 import { CameraIcon } from "./_components/icons";
 import { SocialAccounts } from "./_components/social-accounts";
+import { jwtDecode } from "jwt-decode";
+import { DefaultAvatarIcon } from "@/assets/icons";
 
 export default function Page() {
   const [data, setData] = useState({
-    name: "Danish Heilium",
-    profilePhoto: "/images/user/user-03.png",
+    name: "",
+    profilePhoto: "",
     coverPhoto: "/images/cover/cover-01.png",
+    email: "",
+    phone: "",
+    bio: "",
   });
+
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (!token) return;
+    let userId: number | undefined;
+    try {
+      const payload: any = jwtDecode(token);
+      userId = payload.userId;
+    } catch {
+      userId = undefined;
+    }
+    if (!userId) return;
+    fetch(`/api/user/${userId}`)
+      .then((res) => res.json())
+      .then((user) => {
+        setData({
+          name: user.name || "",
+          profilePhoto: user.avatar,
+          coverPhoto: user?.coverPhoto || data.coverPhoto,
+          email: user.email || "",
+          phone: user.phone || "",
+          bio: user.bio || "",
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e: any) => {
     if (e.target.name === "profilePhoto" ) {
@@ -77,7 +108,7 @@ export default function Page() {
         <div className="px-4 pb-6 text-center lg:pb-8 xl:pb-11.5">
           <div className="relative z-30 mx-auto -mt-22 h-30 w-full max-w-30 rounded-full bg-white/20 p-1 backdrop-blur sm:h-44 sm:max-w-[176px] sm:p-3">
             <div className="relative drop-shadow-2">
-              {data?.profilePhoto && (
+              {data?.profilePhoto ? (
                 <>
                   <Image
                     src={data?.profilePhoto}
@@ -104,6 +135,8 @@ export default function Page() {
                     />
                   </label>
                 </>
+              ) : (
+                <DefaultAvatarIcon className="w-[160px] h-[160px] rounded-full bg-gray-200" />
               )}
             </div>
           </div>
@@ -111,8 +144,9 @@ export default function Page() {
             <h3 className="mb-1 text-heading-6 font-bold text-dark dark:text-white">
               {data?.name}
             </h3>
-            <p className="font-medium">Ui/Ux Designer</p>
-            <div className="mx-auto mb-5.5 mt-5 grid max-w-[370px] grid-cols-3 rounded-[5px] border border-stroke py-[9px] shadow-1 dark:border-dark-3 dark:bg-dark-2 dark:shadow-card">
+            <p className="font-medium">{data?.email}</p>
+            <p className="font-medium">{data?.phone}</p>
+            {/* <div className="mx-auto mb-5.5 mt-5 grid max-w-[370px] grid-cols-3 rounded-[5px] border border-stroke py-[9px] shadow-1 dark:border-dark-3 dark:bg-dark-2 dark:shadow-card">
               <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-dark-3 xsm:flex-row">
                 <span className="font-medium text-dark dark:text-white">
                   259
@@ -131,20 +165,17 @@ export default function Page() {
                 </span>
                 <span className="text-body-sm-sm">Following</span>
               </div>
-            </div>
+            </div> */}
 
-            <div className="mx-auto max-w-[720px]">
-              <h4 className="font-medium text-dark dark:text-white">
-                About Me
-              </h4>
-              <p className="mt-4">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Pellentesque posuere fermentum urna, eu condimentum mauris
-                tempus ut. Donec fermentum blandit aliquet. Etiam dictum dapibus
-                ultricies. Sed vel aliquet libero. Nunc a augue fermentum,
-                pharetra ligula sed, aliquam lacus.
-              </p>
-            </div>
+            {data?.bio && (
+              <div className="mx-auto max-w-[720px]">
+                <h4 className="font-medium text-dark dark:text-white">
+                  About Me
+                </h4>
+                <p className="mt-4">{data.bio}</p>
+              </div>
+              )
+            }
 
             <SocialAccounts />
           </div>

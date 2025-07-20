@@ -122,6 +122,28 @@ export function Table(props: PropsType) {
   );
 }
 
+export function PdfIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M6 4.5C5.17157 4.5 4.5 5.17157 4.5 6V18C4.5 18.8284 5.17157 19.5 6 19.5H18C18.8284 19.5 19.5 18.8284 19.5 18V9.1213C19.5 8.74909 19.3597 8.39196 19.1097 8.1213L15.8787 4.6097C15.608 4.35973 15.2509 4.5 14.8787 4.5H6ZM16.5 9.5V5.25L18.4393 7.5H16.5V9.5Z"
+      />
+      <path d="M8.25 11.25C8.25 10.8358 8.58579 10.5 9 10.5H10.5C11.3284 10.5 12 11.1716 12 12V12.75C12 13.5784 11.3284 14.25 10.5 14.25H9.75V15.75H8.25V11.25ZM9.75 12.75V12H10.5C10.7071 12 10.875 12.1679 10.875 12.375V12.75C10.875 12.9571 10.7071 13.125 10.5 13.125H9.75V12.75Z" />
+      <path d="M13.5 10.5H15.75C16.1642 10.5 16.5 10.8358 16.5 11.25V15.75H15V13.5H13.5V15.75H12V10.5H13.5ZM13.5 12V12.75H15V12H13.5Z" />
+      <path d="M17.25 10.5H18.75C19.1642 10.5 19.5 10.8358 19.5 11.25V12.75C19.5 13.1642 19.1642 13.5 18.75 13.5H18V15.75H16.5V10.5H17.25ZM17.25 12V12H18V12H17.25Z" />
+    </svg>
+  );
+}
+
 export function PieChart(props: PropsType) {
   return (
     <svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>

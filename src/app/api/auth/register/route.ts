@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import CryptoJS from 'crypto-js';
+import prisma from '@/lib/prisma';
 
-const prisma = new PrismaClient();
 const SECRET = process.env.DATA_ENCRYPT_SECRET || 'default_secret';
 
 export async function POST(req: Request) {

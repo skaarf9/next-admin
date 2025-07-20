@@ -25,6 +25,86 @@ export function SearchIcon(props: IconProps) {
   );
 }
 
+export const EditIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={2}
+    stroke="currentColor"
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213l-4.5.75.75-4.5L16.862 3.487z"
+    />
+  </svg>
+);
+
+export const ViewIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={2}
+    stroke="currentColor"
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+    />
+  </svg>
+);
+
+
+export function EyeIcon(props: IconProps) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" {...props}>
+      <path
+        d="M1.833 11C3.667 6.417 7.417 3.667 11 3.667c3.583 0 7.333 2.75 9.167 7.333-1.834 4.583-5.584 7.333-9.167 7.333-3.583 0-7.333-2.75-9.167-7.333z"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      <circle
+        cx={11}
+        cy={11}
+        r={3}
+        stroke="currentColor"
+        strokeWidth={1.5}
+      />
+    </svg>
+  );
+}
+
+export function EyeOffIcon(props: IconProps) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" {...props}>
+      <path
+        d="M4.5 4.5l13 13M1.833 11C3.667 6.417 7.417 3.667 11 3.667c1.41 0 2.83.41 4.17 1.21M20.167 11c-1.834 4.583-5.584 7.333-9.167 7.333-1.41 0-2.83-.41-4.17-1.21"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      <circle
+        cx={11}
+        cy={11}
+        r={3}
+        stroke="currentColor"
+        strokeWidth={1.5}
+      />
+    </svg>
+  );
+}
+
 export function CloseIcon(props: IconProps) {
   return (
     <svg
@@ -413,6 +493,16 @@ export function UploadIcon(props: IconProps) {
           <rect width="20" height="20" fill="white" />
         </clipPath>
       </defs>
+    </svg>
+  );
+}
+
+export function DefaultAvatarIcon(props: IconProps) {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" {...props}>
+      <circle cx="16" cy="16" r="16" fill="#E5E7EB" />
+      <circle cx="16" cy="13" r="6" fill="#A3A3A3" />
+      <ellipse cx="16" cy="24" rx="8" ry="4" fill="#A3A3A3" />
     </svg>
   );
 }
