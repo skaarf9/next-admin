@@ -11,6 +11,7 @@ import { Edit, Delete, History, Add, CloudUpload, CloudDownload } from '@mui/ico
 import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import { getUserId } from '@/utils/auth';
+import { useAlert } from '@/contexts/AlertContext';
 
 // 定义产品定价接口
 interface ProductPricing {
@@ -55,6 +56,9 @@ interface PricingHistory {
 }
 
 export default function ProductPricingPage() {
+
+  const { showAlert } = useAlert();
+
   const router = useRouter();
   const [pricings, setPricings] = useState<ProductPricing[]>([]);
   const [page, setPage] = useState(0);
@@ -67,7 +71,6 @@ export default function ProductPricingPage() {
   const [pricingToDelete, setPricingToDelete] = useState<ProductPricing | null>(null);
   const [histories, setHistories] = useState<PricingHistory[]>([]);
   const [historyColumn, setHistoryColumn] = useState<string | null>(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [contextMenu, setContextMenu] = useState<{mouseX: number, mouseY: number, row: ProductPricing, column: string} | null>(null);
   const [selectedRows, setSelectedRows] = useState<number[]>([]); // 选中的行ID
   const [allSelected, setAllSelected] = useState(false); // 是否全选当前页
@@ -449,12 +452,9 @@ const fetchHistories = (id: number, column?: string) => {
   };
 
   const showSnackbar = (message: string, severity: 'success' | 'error' | 'info' | 'warning') => {
-    setSnackbar({ open: true, message, severity });
+    showAlert(severity, message);
   };
 
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
 
   // 处理右键点击
   const handleContextMenu = (event: React.MouseEvent, row: ProductPricing, columnId: string) => {
@@ -1088,18 +1088,6 @@ const fetchHistories = (id: number, column?: string) => {
           查看完整历史
         </MenuItem>
       </Menu>
-
-      {/* 消息提示 */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity as any} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Paper>
   );
 }
