@@ -76,3 +76,149 @@ model RolePDFPermission {
 
   @@unique([roleId, productPDFId])
 }
+
+// 新增枚举类型：变更操作类型
+enum ChangeType {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// 产品定价历史表
+model ProductPricingHistory {
+  id                      Int       @id @default(autoincrement())
+  
+  // 关联原记录
+  productPricingId        Int       @map("product_pricing_id")
+  productPricing          ProductPricing @relation(fields: [productPricingId], references: [id])
+  
+  // 变更元数据
+  changedAt               DateTime  @default(now()) @map("changed_at")
+  changeType              ChangeType @map("change_type") // 变更类型: CREATE, UPDATE, DELETE
+  changedBy               String?   @db.VarChar(255) @map("changed_by") // 操作人标识（用户名/ID）
+  
+  // 基础信息
+  itemCode                String    @db.VarChar(50) @map("item_code")
+  itemCodeBase            String    @db.VarChar(50) @map("item_code_base")
+  category                String?   @db.VarChar(50)
+  subCategory             String?   @db.VarChar(100) @map("sub_category")
+  referenceImageUrl       String?   @db.Text @map("reference_image_url")
+  location                String?   @db.Text
+  brand                   String?   @db.VarChar(100)
+  productName             String?   @db.Text @map("product_name")
+  
+  // 材料信息
+  materialDescription     String?   @db.Text @map("material_description")
+  materialImageUrl        String?   @db.Text @map("material_image_url")
+  
+  // 数量与备注
+  quantity                Int       @default(1)
+  comments                String?   @db.Text
+  internalNote            String?   @db.Text @map("internal_note")
+  
+  // 价格信息
+  listPriceEur            Decimal?  @db.Decimal(12, 2) @map("list_price_eur")
+  listPriceUsd            Decimal?  @db.Decimal(12, 2) @map("list_price_usd")
+  listPriceRmb            Decimal?  @db.Decimal(12, 2) @map("list_price_rmb")
+  listPriceGbp            Decimal?  @db.Decimal(12, 2) @map("list_price_gbp")
+  supplierDiscount        Decimal?  @db.Decimal(5, 3) @map("supplier_discount")
+  costLocalCurrency       Decimal?  @db.Decimal(12, 2) @map("cost_local_currency")
+  exchangeRate            Decimal?  @db.Decimal(10, 4) @map("exchange_rate")
+  targetGp                Decimal?  @db.Decimal(5, 3) @map("target_gp")
+  
+  // 预算信息
+  usdBudget1              Decimal?  @db.Decimal(12, 2) @map("usd_budget_1")
+  kerryPrice              Decimal?  @db.Decimal(12, 2) @map("kerry_price")
+  unitBudget              Decimal?  @db.Decimal(12, 2) @map("unit_budget")
+  totalBudget             Decimal?  @db.Decimal(12, 2) @map("total_budget")
+  
+  // 系统字段
+  createdAt               DateTime? @map("created_at") // 原记录的创建时间
+  updatedAt               DateTime? @map("updated_at") // 原记录的更新时间
+  
+  // 备用字段
+  spareText1              String?   @db.Text @map("spare_text_1")   // 备用文本字段1
+  spareText2              String?   @db.Text @map("spare_text_2")   // 备用文本字段2
+  spareText3              String?   @db.Text @map("spare_text_3")   // 备用文本字段3
+  spareText4              String?   @db.Text @map("spare_text_4")   // 备用文本字段4
+  spareText5              String?   @db.Text @map("spare_text_5")   // 备用文本字段5
+  spareNumeric1           Decimal?    @db.Decimal(12, 2) @map("spare_numeric_1") // 备用数值字段
+  spareNumeric2           Decimal?    @db.Decimal(12, 2) @map("spare_numeric_2") // 备用数值字段2
+  spareNumeric3           Decimal?    @db.Decimal(12, 2) @map("spare_numeric_3") // 备用数值字段3
+  spareNumeric4           Decimal?    @db.Decimal(12, 2) @map("spare_numeric_4") // 备用数值字段4
+  spareBoolean            Boolean?  @default(false) @map("spare_boolean") // 备用布尔字段
+  
+  // 索引优化
+  @@index([productPricingId])
+  @@index([itemCode])
+  @@index([changedAt])
+  @@index([changeType])
+  
+  @@map("product_pricing_history")
+}
+
+// 新增产品定价表
+model ProductPricing {
+  id                      Int       @id @default(autoincrement())
+  // 基础信息
+  itemCode                String    @db.VarChar(50) @map("item_code")
+  itemCodeBase            String    @db.VarChar(50) @map("item_code_base")
+  category                String?   @db.VarChar(50)
+  subCategory             String?   @db.VarChar(100) @map("sub_category")
+  referenceImageUrl       String?   @db.Text @map("reference_image_url")
+  location                String?   @db.Text
+  brand                   String?   @db.VarChar(100)
+  productName             String?   @db.Text @map("product_name")
+  
+  // 材料信息
+  materialDescription     String?   @db.Text @map("material_description")
+  materialImageUrl        String?   @db.Text @map("material_image_url")
+  
+  // 数量与备注
+  quantity                Int       @default(1)
+  comments                String?   @db.Text
+  internalNote            String?   @db.Text @map("internal_note")
+  
+  // 价格信息 - 使用 Decimal 类型
+  listPriceEur            Decimal?  @db.Decimal(12, 2) @map("list_price_eur")
+  listPriceUsd            Decimal?  @db.Decimal(12, 2) @map("list_price_usd")
+  listPriceRmb            Decimal?  @db.Decimal(12, 2) @map("list_price_rmb")
+  listPriceGbp            Decimal?  @db.Decimal(12, 2) @map("list_price_gbp")
+  supplierDiscount        Decimal?  @db.Decimal(5, 3) @map("supplier_discount")
+  costLocalCurrency       Decimal?  @db.Decimal(12, 2) @map("cost_local_currency")
+  exchangeRate            Decimal?  @db.Decimal(10, 4) @map("exchange_rate")
+  targetGp                Decimal?  @db.Decimal(5, 3) @map("target_gp")
+  
+  // 预算信息
+  usdBudget1              Decimal?  @db.Decimal(12, 2) @map("usd_budget_1")
+  kerryPrice              Decimal?  @db.Decimal(12, 2) @map("kerry_price")
+  unitBudget              Decimal?  @db.Decimal(12, 2) @map("unit_budget")
+  totalBudget             Decimal?  @db.Decimal(12, 2) @map("total_budget")
+  
+  // 系统字段
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  // 历史信息
+  histories               ProductPricingHistory[]
+  
+  // 备用字段
+  spareText1              String?   @db.Text @map("spare_text_1")   // 备用文本字段1
+  spareText2              String?   @db.Text @map("spare_text_2")   // 备用文本字段2
+  spareText3              String?   @db.Text @map("spare_text_3")   // 备用文本字段3
+  spareText4              String?   @db.Text @map("spare_text_4")   // 备用文本字段4
+  spareText5              String?   @db.Text @map("spare_text_5")   // 备用文本字段5
+  spareNumeric1           Decimal?    @db.Decimal(12, 2) @map("spare_numeric_1") // 备用数值字段
+  spareNumeric2           Decimal?    @db.Decimal(12, 2) @map("spare_numeric_2") // 备用数值字段2
+  spareNumeric3           Decimal?    @db.Decimal(12, 2) @map("spare_numeric_3") // 备用数值字段3
+  spareNumeric4           Decimal?    @db.Decimal(12, 2) @map("spare_numeric_4") // 备用数值字段4
+  spareBoolean            Boolean?  @default(false) @map("spare_boolean") // 备用布尔字段
+  
+  // 索引优化
+  @@index([itemCode])
+  @@index([itemCodeBase])
+  @@index([category])
+  @@index([brand])
+  
+  @@map("product_pricing")
+}
