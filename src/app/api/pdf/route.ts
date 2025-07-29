@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     // 提取用户有权限访问的PDF ID列表
     const allowedPdfIds = user.pdfPermissions.map(p => p.pdfId);
     
+    console.log(user)
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -21,11 +22,11 @@ export async function GET(req: NextRequest) {
     
     const skip = (page - 1) * limit;
 
+    const where: any = {}
     // 构建查询条件
-    const where: any = {
-      id: { in: allowedPdfIds } // 只查询用户有权限的PDF
-    };
-    
+    if(!user?.roles?.includes('admin')){
+      where.id = { in: allowedPdfIds }
+    }
     if (name) {
       where.name = {
         contains: name,

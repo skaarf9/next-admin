@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: '未认证' }, { status: 401 });
     }
 
-    const roleId = parseInt(params.id);
+    const roleId = parseInt((await params).id);
     const { userIds } = await req.json();
     
     // 添加用户到角色
