@@ -35,6 +35,7 @@ model Role {
   permissions Permission[]
   users      UserRole[]
   pdfs       RolePDFPermission[]
+  brands     BrandPermission[]
 }
 
 // 用户-角色多对多
@@ -221,4 +222,30 @@ model ProductPricing {
   @@index([brand])
   
   @@map("product_pricing")
+}
+
+// 品牌表
+model Brand {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  country   String
+  discount  Int      @default(0)
+  contact   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联权限表
+  roles          BrandPermission[]
+}
+
+// 角色-品牌权限表
+model BrandPermission {
+  id          Int        @id @default(autoincrement())
+  role        Role       @relation(fields: [roleId], references: [id])
+  roleId      Int
+  brand   Brand   @relation(fields: [brandId], references: [id])
+  brandId Int
+  canEdit     Boolean    @default(false)
+
+  @@unique([roleId, brandId])
 }
