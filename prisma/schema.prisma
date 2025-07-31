@@ -249,3 +249,95 @@ model BrandPermission {
 
   @@unique([roleId, brandId])
 }
+
+// 在现有schema末尾添加以下模型
+
+// 项目状态枚举
+enum ProjectStatus {
+  PENDING    // 待开始
+  IN_PROGRESS // 进行中
+  COMPLETED   // 已完成
+  PAUSED      // 暂停
+}
+
+// 区域状态枚举
+enum RegionStatus {
+  PENDING    // 待开始
+  IN_PROGRESS // 进行中
+  COMPLETED   // 已完成
+  PAUSED      // 暂停
+}
+
+// 版本状态枚举
+enum VersionStatus {
+  DRAFT       // 草稿
+  UPLOADED    // 已上传
+  ARCHIVED    // 已归档
+}
+
+
+// 项目表
+model Project {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(100)
+  description String?       @db.Text
+  status      ProjectStatus @default(PENDING)
+  manager     String        @db.VarChar(50)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // 关联区域
+  regions     Region[]
+
+  @@index([status])
+  @@index([manager])
+  @@map("projects")
+}
+
+// 区域表
+model Region {
+  id          Int          @id @default(autoincrement())
+  projectId   Int          @map("project_id")
+  name        String       @db.VarChar(100)
+  description String?      @db.Text
+  address     String?      @db.Text
+  status      RegionStatus @default(PENDING)
+  manager     String       @db.VarChar(50)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  // 关联项目
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // 关联版本
+  versions    Version[]
+
+  @@index([projectId])
+  @@index([status])
+  @@index([manager])
+  @@map("regions")
+}
+
+// 版本表
+model Version {
+  id            Int           @id @default(autoincrement())
+  regionId      Int           @map("region_id")
+  version       String        @db.VarChar(20) // v1.0.0
+  description   String?       @db.Text
+  status        VersionStatus @default(DRAFT)
+  creator       String        @db.VarChar(50)
+  fileSize      String?       @db.VarChar(20) // 2.5MB
+  fileUrl       String?       @db.Text
+  downloadCount Int           @default(0) @map("download_count")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // 关联区域
+  region        Region        @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+  @@index([regionId])
+  @@index([status])
+  @@index([version])
+  @@index([creator])
+  @@map("versions")
+}

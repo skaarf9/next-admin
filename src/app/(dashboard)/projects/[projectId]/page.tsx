@@ -32,7 +32,7 @@ export default function ProjectRegionsPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
-
+  const [loading, setLoading] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
   const [regions, setRegions] = useState<Region[]>([]);
   const [page, setPage] = useState(1);
@@ -46,48 +46,62 @@ export default function ProjectRegionsPage() {
     name: '',
     description: '',
     address: '',
-    status: '待开始',
+    status: 'PENDING',
     manager: ''
   });
   const [pageSize, setPageSize] = useState(10);
   const [searchName, setSearchName] = useState('');
 
-  // 模拟项目数据
-  const mockProjects: Record<string, Project> = {
-    '1': { id: 1, name: 'BOKE', description: '博科项目', manager: '张经理', status: '进行中' },
-    '2': { id: 2, name: 'BKHQ', description: '博科总部项目', manager: '李经理', status: '进行中' },
-    '3': { id: 3, name: 'SHZX', description: '上海中心项目', manager: '王经理', status: '待开始' }
-  };
 
-  // 模拟区域数据
-  const mockRegions: Record<string, Region[]> = {
-    '1': [
-      { id: 1, name: '华东区域', description: '华东地区业务区域', address: '上海市浦东新区', status: '进行中', manager: '陈主管', createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' },
-      { id: 2, name: '华南区域', description: '华南地区业务区域', address: '广州市天河区', status: '进行中', manager: '刘主管', createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' },
-      { id: 3, name: '华北区域', description: '华北地区业务区域', address: '北京市朝阳区', status: '待开始', manager: '赵主管', createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' },
-      { id: 4, name: '西南区域', description: '西南地区业务区域', address: '成都市高新区', status: '已完成', manager: '孙主管', createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' }
-    ],
-    '2': [
-      { id: 5, name: '总部大楼A区', description: '总部办公区域A', address: '上海市静安区南京西路', status: '进行中', manager: '周主管', createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' },
-      { id: 6, name: '总部大楼B区', description: '总部办公区域B', address: '上海市静安区南京西路', status: '进行中', manager: '吴主管', createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' }
-    ],
-    '3': [
-      { id: 7, name: '上海中心东塔', description: '东塔办公区域', address: '上海市浦东新区陆家嘴', status: '待开始', manager: '郑主管', createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' },
-      { id: 8, name: '上海中心西塔', description: '西塔办公区域', address: '上海市浦东新区陆家嘴', status: '待开始', manager: '钱主管', createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' }
-    ]
-  };
+  const fetchData = async () => {
+    setLoading(true);
 
-  const fetchData = () => {
-    const currentProject = mockProjects[projectId];
-    const currentRegions = mockRegions[projectId] || [];
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: pageSize.toString(),
+        ...(searchName && { searchName })
+      });
 
-    setProject(currentProject);
+      // 并行请求项目信息和区域列表
+      const [projectResponse, regionsResponse] = await Promise.all([
+        fetch(`/api/projects/${projectId}`),
+        fetch(`/api/projects/${projectId}/regions?${params}`)
+      ]);
 
-    const filteredRegions = currentRegions.filter(region =>
-      region.name.toLowerCase().includes(searchName.toLowerCase())
-    );
-    setRegions(filteredRegions);
-    setTotalPages(Math.ceil(filteredRegions.length / pageSize));
+      console.log('项目响应:', projectResponse);
+      console.log('区域响应:', regionsResponse);
+
+      // 处理项目信息
+      if (projectResponse.ok) {
+        const projectResult = await projectResponse.json();
+        setProject(projectResult || null);
+      } else {
+        const projectError = await projectResponse.json();
+        console.error('获取项目信息失败:', projectError.error);
+      }
+
+      // 处理区域列表
+      if (regionsResponse.ok) {
+        const regionsResult = await regionsResponse.json();
+        console.log(regionsResult.data)
+        setRegions(regionsResult.data || []);
+        setTotalPages(regionsResult.pagination?.totalPages || 1);
+      } else {
+        const regionsError = await regionsResponse.json();
+        console.error('获取区域列表失败:', regionsError.error);
+        setRegions([]);
+        setTotalPages(1);
+      }
+
+    } catch (error) {
+      console.error('请求失败:', error);
+      setProject(null);
+      setRegions([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -124,22 +138,51 @@ export default function ProjectRegionsPage() {
       name: '',
       description: '',
       address: '',
-      status: '待开始',
+      status: 'PENDING',
       manager: ''
     });
   };
 
-  const handleSave = () => {
-    console.log('保存区域:', selectedRegion);
-    handleClose();
-    fetchData();
+
+  const handleCreate = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch(`/api/projects/${projectId}/regions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...newRegion,
+          // id: parseInt(projectId)
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '创建失败');
+      }
+
+      const result = await response.json();
+      console.log('创建区域成功:', result);
+
+      // 重置表单
+      setNewRegion({ address: "", manager: "", status: "", name: '', description: '' });
+      handleCloseAdd();
+
+      // 刷新数据
+      await fetchData();
+
+    } catch (error) {
+      console.error('创建区域失败:', error);
+      // 可选：显示错误提示
+      // toast.error(error.message || '创建区域失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreate = () => {
-    console.log('创建区域:', newRegion);
-    handleCloseAdd();
-    fetchData();
-  };
 
   const handleDelete = () => {
     console.log('删除区域:', regionToDelete);
@@ -153,10 +196,10 @@ export default function ProjectRegionsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case '进行中': return { backgroundColor: '#e8f5e8', color: '#2e7d32' };
-      case '已完成': return { backgroundColor: '#e3f2fd', color: '#1976d2' };
-      case '待开始': return { backgroundColor: '#fff3e0', color: '#f57c00' };
-      default: return { backgroundColor: '#f5f5f5', color: '#666' };
+      case 'IN_PROGRESS': return { backgroundColor: '#e8f5e8', color: '#2e7d32' };
+      case 'COMPLETED': return { backgroundColor: '#e3f2fd', color: '#1976d2' };
+      case 'PAUSED': return { backgroundColor: '#fff3e0', color: '#f57c00' };
+      default: return { backgroundColor: '#e8f5e8', color: '#2e7d32' };
     }
   };
 
@@ -168,6 +211,8 @@ export default function ProjectRegionsPage() {
     return <Typography>项目不存在</Typography>;
   }
 
+  // @ts-ignore
+  // @ts-ignore
   return (
     <Box sx={{ p: 2 }}>
       {/* 面包屑导航 */}

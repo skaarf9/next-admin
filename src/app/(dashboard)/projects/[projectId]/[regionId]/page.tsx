@@ -52,71 +52,74 @@ export default function RegionVersionsPage() {
   const [openAdd, setOpenAdd] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(null);
   const [versionToDelete, setVersionToDelete] = useState<Version | null>(null);
+  const [loading, setLoading] = useState(false);
   const [newVersion, setNewVersion] = useState<Omit<Version, 'id' | 'createdAt' | 'updatedAt' | 'downloadCount'>>({
     version: '',
     description: '',
-    status: '草稿',
+    status: 'DRAFT',
     creator: '',
     fileSize: ''
   });
   const [pageSize, setPageSize] = useState(10);
   const [searchVersion, setSearchVersion] = useState('');
 
-  // 模拟项目数据
-  const mockProjects: Record<string, Project> = {
-    '1': { id: 1, name: 'BOKE', description: '博科项目' },
-    '2': { id: 2, name: 'BKHQ', description: '博科总部项目' },
-    '3': { id: 3, name: 'SHZX', description: '上海中心项目' }
-  };
+  const fetchData = async () => {
+    setLoading(true);
 
-  // 模拟区域数据
-  const mockRegions: Record<string, Record<string, Region>> = {
-    '1': {
-      '1': { id: 1, name: '华东区域', description: '华东地区业务区域', address: '上海市浦东新区', status: '进行中', manager: '陈主管' },
-      '2': { id: 2, name: '华南区域', description: '华南地区业务区域', address: '广州市天河区', status: '进行中', manager: '刘主管' },
-      '3': { id: 3, name: '华北区域', description: '华北地区业务区域', address: '北京市朝阳区', status: '待开始', manager: '赵主管' },
-      '4': { id: 4, name: '西南区域', description: '西南地区业务区域', address: '成都市高新区', status: '已完成', manager: '孙主管' }
-    },
-    '2': {
-      '5': { id: 5, name: '总部大楼A区', description: '总部办公区域A', address: '上海市静安区南京西路', status: '进行中', manager: '周主管' },
-      '6': { id: 6, name: '总部大楼B区', description: '总部办公区域B', address: '上海市静安区南京西路', status: '进行中', manager: '吴主管' }
-    },
-    '3': {
-      '7': { id: 7, name: '上海中心东塔', description: '东塔办公区域', address: '上海市浦东新区陆家嘴', status: '待开始', manager: '郑主管' },
-      '8': { id: 8, name: '上海中心西塔', description: '西塔办公区域', address: '上海市浦东新区陆家嘴', status: '待开始', manager: '钱主管' }
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: pageSize.toString(),
+        ...(searchVersion && { searchVersion })
+      });
+
+      // 并行请求项目信息、区域信息和版本列表
+      const [projectResponse, regionResponse, versionsResponse] = await Promise.all([
+        fetch(`/api/projects/${projectId}`),
+        fetch(`/api/projects/${projectId}/regions/${regionId}`),
+        fetch(`/api/projects/${projectId}/regions/${regionId}/versions?${params}`)
+      ]);
+
+      // 处理项目信息
+      if (projectResponse.ok) {
+        const projectResult = await projectResponse.json();
+        setProject(projectResult || null);
+      } else {
+        const projectError = await projectResponse.json();
+        console.error('获取项目信息失败:', projectError.error);
+      }
+
+      // 处理区域信息
+      if (regionResponse.ok) {
+        const regionResult = await regionResponse.json();
+        setRegion(regionResult || null);
+      } else {
+        const regionError = await regionResponse.json();
+        console.error('获取区域信息失败:', regionError.error);
+        setRegion(null);
+      }
+
+      // 处理版本列表
+      if (versionsResponse.ok) {
+        const versionsResult = await versionsResponse.json();
+        setVersions(versionsResult.data || []);
+        setTotalPages(Math.ceil((versionsResult.total || 0) / pageSize));
+      } else {
+        const versionsError = await versionsResponse.json();
+        console.error('获取版本列表失败:', versionsError.error);
+        setVersions([]);
+        setTotalPages(1);
+      }
+
+    } catch (error) {
+      console.error('请求失败:', error);
+      setProject(null);
+      setRegion(null);
+      setVersions([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  // 模拟版本数据
-  const mockVersions: Record<string, Version[]> = {
-    '1': [
-      { id: 1, version: 'v1.0.0', description: '初始版本', status: '已发布', creator: '张开发', fileSize: '2.5MB', downloadCount: 15, createdAt: '2025-07-20T00:00:00Z', updatedAt: '2025-07-20T00:00:00Z' },
-      { id: 2, version: 'v1.1.0', description: '功能优化版本', status: '已发布', creator: '李开发', fileSize: '2.8MB', downloadCount: 8, createdAt: '2025-07-25T00:00:00Z', updatedAt: '2025-07-25T00:00:00Z' },
-      { id: 3, version: 'v1.2.0', description: '修复bug版本', status: '测试中', creator: '王开发', fileSize: '3.1MB', downloadCount: 0, createdAt: '2025-07-28T00:00:00Z', updatedAt: '2025-07-28T00:00:00Z' }
-    ],
-    '2': [
-      { id: 4, version: 'v2.0.0', description: '重构版本', status: '已发布', creator: '陈开发', fileSize: '4.2MB', downloadCount: 22, createdAt: '2025-07-15T00:00:00Z', updatedAt: '2025-07-15T00:00:00Z' },
-      { id: 5, version: 'v2.1.0', description: '新增功能', status: '草稿', creator: '刘开发', fileSize: '4.5MB', downloadCount: 0, createdAt: '2025-07-26T00:00:00Z', updatedAt: '2025-07-26T00:00:00Z' }
-    ],
-    '3': [
-      { id: 6, version: 'v3.0.0', description: '全新架构', status: '开发中', creator: '赵开发', fileSize: '5.1MB', downloadCount: 0, createdAt: '2025-07-22T00:00:00Z', updatedAt: '2025-07-22T00:00:00Z' }
-    ]
-  };
-
-  const fetchData = () => {
-    const currentProject = mockProjects[projectId];
-    const currentRegion = mockRegions[projectId]?.[regionId];
-    const currentVersions = mockVersions[regionId] || [];
-
-    setProject(currentProject);
-    setRegion(currentRegion);
-
-    const filteredVersions = currentVersions.filter(version =>
-      version.version.toLowerCase().includes(searchVersion.toLowerCase()) ||
-      version.description.toLowerCase().includes(searchVersion.toLowerCase())
-    );
-    setVersions(filteredVersions);
-    setTotalPages(Math.ceil(filteredVersions.length / pageSize));
   };
 
   useEffect(() => {
@@ -152,29 +155,44 @@ export default function RegionVersionsPage() {
     setNewVersion({
       version: '',
       description: '',
-      status: '草稿',
+      status: 'DRAFT',
       creator: '',
       fileSize: ''
     });
   };
 
-  const handleSave = () => {
-    console.log('保存版本:', selectedVersion);
-    handleClose();
-    fetchData();
+
+  const handleCreate = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch(`/api/projects/${projectId}/regions/${regionId}/versions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newVersion)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('创建版本成功:', result);
+        handleCloseAdd();
+        fetchData();
+      } else {
+        const error = await response.json();
+        console.error('创建版本失败:', error.error);
+        // 可选：显示错误提示
+      }
+    } catch (error) {
+      console.error('创建版本请求失败:', error);
+      // 可选：显示错误提示
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreate = () => {
-    console.log('创建版本:', newVersion);
-    handleCloseAdd();
-    fetchData();
-  };
 
-  const handleDelete = () => {
-    console.log('删除版本:', versionToDelete);
-    handleCloseDelete();
-    fetchData();
-  };
 
   const handleDownload = (version: Version, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -205,6 +223,7 @@ export default function RegionVersionsPage() {
     return <Typography>项目或区域不存在</Typography>;
   }
 
+  // @ts-ignore
   return (
     <Box sx={{ p: 2 }}>
       {/* 面包屑导航 */}
