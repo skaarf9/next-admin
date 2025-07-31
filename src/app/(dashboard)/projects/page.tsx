@@ -5,8 +5,8 @@ import {
   IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button,
   TextField, Pagination, Stack, MenuItem, Select, SelectChangeEvent,
   Tooltip, Box, Typography, Grid, InputAdornment, FormControl, InputLabel,
-  Chip
-} from '@mui/material';
+  Chip, Tabs, Tab
+} from "@mui/material";
 import { Edit, Delete, Add, Search, Clear, FolderOpen } from '@mui/icons-material';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -30,6 +30,9 @@ interface Project {
 export default function ProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [openPreview, setOpenPreview] = useState(false);
+  const [previewProject, setPreviewProject] = useState<Project | null>(null);
+  const [previewTab, setPreviewTab] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [openEdit, setOpenEdit] = useState(false);
@@ -49,39 +52,6 @@ export default function ProjectsPage() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
-  // 模拟数据 - 对应BOKE, BKHQ, SHZX项目
-  const mockProjects: Project[] = [
-    {
-      id: 1,
-      name: "BOKE",
-      description: "博科项目",
-      regionCount: 4,
-      status: "IN_PROGRESS",
-      manager: "张经理",
-      createdAt: "2025-07-28T00:00:00Z",
-      updatedAt: "2025-07-28T00:00:00Z"
-    },
-    {
-      id: 2,
-      name: "BKHQ",
-      description: "博科总部项目",
-      regionCount: 6,
-      status: "IN_PROGRESS",
-      manager: "李经理",
-      createdAt: "2025-07-28T00:00:00Z",
-      updatedAt: "2025-07-28T00:00:00Z"
-    },
-    {
-      id: 3,
-      name: "SHZX",
-      description: "上海中心项目",
-      regionCount: 8,
-      status: "PENDING",
-      manager: "王经理",
-      createdAt: "2025-07-28T00:00:00Z",
-      updatedAt: "2025-07-28T00:00:00Z"
-    }
-  ];
 
   // 2. 在组件内部添加状态映射（第45行左右，fetchProjects函数前）
   const statusMap = {
@@ -251,7 +221,15 @@ export default function ProjectsPage() {
     setPageSize(Number(event.target.value));
     setPage(1);
   };
+  const handleOpenPreview = (project: Project) => {
+    setPreviewProject(project);
+    setOpenPreview(true);
+  };
 
+  const handleClosePreview = () => {
+    setOpenPreview(false);
+    setPreviewProject(null);
+  };
   const resetSearch = () => {
     setSearchName('');
     setStartDate(null);
@@ -426,6 +404,18 @@ export default function ProjectsPage() {
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
+                      handleOpenPreview(project);
+                    }}
+                    sx={{ mr: 1 }}
+                  >
+                    <Tooltip title="预览小计">
+                      <Analytics fontSize="small" />
+                    </Tooltip>
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleOpenEdit(project);
                     }}
                     sx={{ mr: 1 }}
@@ -438,11 +428,6 @@ export default function ProjectsPage() {
                       e.stopPropagation();
                     }}
                   >
-                    {/*<CostAnalysisModal*/}
-                    {/*  projectId={project.id.toString()}*/}
-                    {/*  projectName={project.name}*/}
-                    {/*  trigger={<Analytics fontSize="small" />}*/}
-                    {/*/>*/}
                   </IconButton>
                   <IconButton
                     size="small"
@@ -489,6 +474,266 @@ export default function ProjectsPage() {
           color="primary"
         />
       </Box>
+
+      <Dialog open={openPreview} onClose={handleClosePreview} maxWidth="xl" fullWidth>
+        <DialogTitle>项目预览小计 - {previewProject?.name}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ p: 2 }}>
+            {/* 项目总览 */}
+            <Typography variant="h6" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+              项目总览
+            </Typography>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={3}>
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#e3f2fd' }}>
+                  <Typography variant="h4" sx={{ color: '#1976d2', fontWeight: 'bold' }}>1,250</Typography>
+                  <Typography variant="body2" color="text.secondary">家具总数量（件）</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={3}>
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#fff3e0' }}>
+                  <Typography variant="h4" sx={{ color: '#f57c00', fontWeight: 'bold' }}>¥85.6万</Typography>
+                  <Typography variant="body2" color="text.secondary">总成本</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={3}>
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#e8f5e8' }}>
+                  <Typography variant="h4" sx={{ color: '#2e7d32', fontWeight: 'bold' }}>¥128.4万</Typography>
+                  <Typography variant="body2" color="text.secondary">总售价</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={3}>
+                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#f3e5f5' }}>
+                  <Typography variant="h4" sx={{ color: '#7b1fa2', fontWeight: 'bold' }}>¥42.8万</Typography>
+                  <Typography variant="body2" color="text.secondary">毛利润</Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Tab导航 */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+              <Tabs value={previewTab} onChange={(e, newValue) => setPreviewTab(newValue)}>
+                <Tab label="区域明细" />
+                <Tab label="品牌统计" />
+                <Tab label="家具种类" />
+              </Tabs>
+            </Box>
+
+            {previewTab === 0 && (
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                    区域明细
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip label="4个区域" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                    <Chip label="1,250件家具" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                    <Chip label="成本¥85.6万" size="small" sx={{ bgcolor: '#fff3e0', color: '#f57c00' }} />
+                    <Chip label="售价¥128.4万" size="small" sx={{ bgcolor: '#e8f5e8', color: '#2e7d32' }} />
+                    <Chip label="毛利¥42.8万" size="small" sx={{ bgcolor: '#f3e5f5', color: '#7b1fa2' }} />
+                  </Box>
+                </Box>
+
+                <TableContainer component={Paper} sx={{ maxHeight: 500 }}>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>区域名称</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>家具数量</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>品牌数</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>种类数</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>成本金额</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>售价金额</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>毛利金额</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>毛利率</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {[
+                        { name: '办公区域A', count: 320, brands: 8, categories: 12, cost: 218000, price: 327000, profit: 109000 },
+                        { name: '会议室B', count: 180, brands: 5, categories: 8, cost: 156000, price: 234000, profit: 78000 },
+                        { name: '休息区C', count: 245, brands: 6, categories: 10, cost: 167000, price: 250500, profit: 83500 },
+                        { name: '接待区D', count: 505, brands: 10, categories: 15, cost: 315000, price: 472500, profit: 157500 }
+                      ].map((region, index) => {
+                        const profitRate = ((region.profit / region.cost) * 100).toFixed(1);
+                        return (
+                          <TableRow key={index} hover>
+                            <TableCell><Typography sx={{ fontWeight: 'medium' }}>{region.name}</Typography></TableCell>
+                            <TableCell align="center">
+                              <Chip label={`${region.count} 件`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                            </TableCell>
+                            <TableCell align="center">{region.brands} 个</TableCell>
+                            <TableCell align="center">{region.categories} 类</TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#f57c00', fontWeight: 'medium' }}>¥{(region.cost / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#2e7d32', fontWeight: 'medium' }}>¥{(region.price / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#7b1fa2', fontWeight: 'medium' }}>¥{(region.profit / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip label={`${profitRate}%`} size="small"
+                                    sx={{ bgcolor: parseFloat(profitRate) > 40 ? '#e8f5e8' : '#fff3e0',
+                                      color: parseFloat(profitRate) > 40 ? '#2e7d32' : '#f57c00' }} />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+
+            {previewTab === 1 && (
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                    品牌统计
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip label="12个品牌" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                    <Chip label="1,250件家具" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                    <Chip label="成本¥85.6万" size="small" sx={{ bgcolor: '#fff3e0', color: '#f57c00' }} />
+                    <Chip label="售价¥128.4万" size="small" sx={{ bgcolor: '#e8f5e8', color: '#2e7d32' }} />
+                    <Chip label="毛利¥42.8万" size="small" sx={{ bgcolor: '#f3e5f5', color: '#7b1fa2' }} />
+                  </Box>
+                </Box>
+
+                <TableContainer component={Paper} sx={{ maxHeight: 500 }}>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>品牌名称</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>家具数量</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>涉及区域</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>成本金额</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>售价金额</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>毛利金额</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>毛利率</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {[
+                        { name: '宜家(IKEA)', count: 385, regions: ['办公区域A', '休息区C'], cost: 245000, price: 367500, profit: 122500 },
+                        { name: 'Herman Miller', count: 156, regions: ['会议室B', '接待区D'], cost: 198000, price: 297000, profit: 99000 },
+                        { name: 'Steelcase', count: 298, regions: ['办公区域A', '接待区D'], cost: 167000, price: 250500, profit: 83500 },
+                        { name: 'Haworth', count: 234, regions: ['会议室B', '休息区C'], cost: 134000, price: 201000, profit: 67000 },
+                        { name: 'Knoll', count: 177, regions: ['接待区D'], cost: 112000, price: 168000, profit: 56000 }
+                      ].map((brand, index) => {
+                        const profitRate = ((brand.profit / brand.cost) * 100).toFixed(1);
+                        return (
+                          <TableRow key={index} hover>
+                            <TableCell><Typography sx={{ fontWeight: 'medium' }}>{brand.name}</Typography></TableCell>
+                            <TableCell align="center">
+                              <Chip label={`${brand.count} 件`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                            </TableCell>
+                            <TableCell align="center">{brand.regions.length} 个区域</TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#f57c00', fontWeight: 'medium' }}>¥{(brand.cost / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#2e7d32', fontWeight: 'medium' }}>¥{(brand.price / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#7b1fa2', fontWeight: 'medium' }}>¥{(brand.profit / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip label={`${profitRate}%`} size="small"
+                                    sx={{ bgcolor: parseFloat(profitRate) > 40 ? '#e8f5e8' : '#fff3e0',
+                                      color: parseFloat(profitRate) > 40 ? '#2e7d32' : '#f57c00' }} />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+
+            {previewTab === 2 && (
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                    家具种类统计
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip label="18种家具" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                    <Chip label="1,250件家具" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                    <Chip label="成本¥85.6万" size="small" sx={{ bgcolor: '#fff3e0', color: '#f57c00' }} />
+                    <Chip label="售价¥128.4万" size="small" sx={{ bgcolor: '#e8f5e8', color: '#2e7d32' }} />
+                    <Chip label="毛利¥42.8万" size="small" sx={{ bgcolor: '#f3e5f5', color: '#7b1fa2' }} />
+                  </Box>
+                </Box>
+
+                <TableContainer component={Paper} sx={{ maxHeight: 500 }}>
+                  <Table stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>家具种类</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>数量</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>涉及品牌</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>涉及区域</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>成本金额</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>售价金额</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>毛利金额</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>毛利率</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {[
+                        { name: '办公椅', count: 456, brands: 8, regions: 4, cost: 298000, price: 447000, profit: 149000 },
+                        { name: '办公桌', count: 234, brands: 6, regions: 4, cost: 187000, price: 280500, profit: 93500 },
+                        { name: '会议桌', count: 45, brands: 4, regions: 2, cost: 89000, price: 133500, profit: 44500 },
+                        { name: '文件柜', count: 167, brands: 5, regions: 3, cost: 78000, price: 117000, profit: 39000 },
+                        { name: '沙发', count: 89, brands: 6, regions: 3, cost: 134000, price: 201000, profit: 67000 },
+                        { name: '茶几', count: 67, brands: 4, regions: 2, cost: 45000, price: 67500, profit: 22500 },
+                        { name: '书架', count: 123, brands: 3, regions: 3, cost: 67000, price: 100500, profit: 33500 },
+                        { name: '接待台', count: 12, brands: 2, regions: 1, cost: 23000, price: 34500, profit: 11500 }
+                      ].map((category, index) => {
+                        const profitRate = ((category.profit / category.cost) * 100).toFixed(1);
+                        return (
+                          <TableRow key={index} hover>
+                            <TableCell><Typography sx={{ fontWeight: 'medium' }}>{category.name}</Typography></TableCell>
+                            <TableCell align="center">
+                              <Chip label={`${category.count} 件`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }} />
+                            </TableCell>
+                            <TableCell align="center">{category.brands} 个</TableCell>
+                            <TableCell align="center">{category.regions} 个</TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#f57c00', fontWeight: 'medium' }}>¥{(category.cost / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#2e7d32', fontWeight: 'medium' }}>¥{(category.price / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography sx={{ color: '#7b1fa2', fontWeight: 'medium' }}>¥{(category.profit / 10000).toFixed(1)}万</Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip label={`${profitRate}%`} size="small"
+                                    sx={{ bgcolor: parseFloat(profitRate) > 40 ? '#e8f5e8' : '#fff3e0',
+                                      color: parseFloat(profitRate) > 40 ? '#2e7d32' : '#f57c00' }} />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+
+
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleClosePreview} variant="outlined">关闭</Button>
+          <Button variant="contained" sx={{ ml: 1 }}>导出报表</Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={openAdd} onClose={handleCloseAdd} maxWidth="sm" fullWidth>
         <DialogTitle>新增项目</DialogTitle>
