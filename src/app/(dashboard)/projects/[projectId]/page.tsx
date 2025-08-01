@@ -4,9 +4,20 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button,
   TextField, Pagination, Box, Typography, InputAdornment, Chip,
-  Breadcrumbs, Link, Card, CardContent, Grid, Tooltip, Tabs, Tab
+  Breadcrumbs, Link, Card, CardContent, Grid, Tooltip, Tabs, Tab, FormControl, InputLabel, Select, MenuItem
 } from "@mui/material";
-import { Edit, Delete, Add, Search, Clear, ArrowBack, LocationOn, Business, Analytics } from "@mui/icons-material";
+import {
+  Edit,
+  Delete,
+  Add,
+  Search,
+  Clear,
+  ArrowBack,
+  LocationOn,
+  Business,
+  Analytics,
+  Download,
+} from "@mui/icons-material";
 import { useRouter, useParams } from 'next/navigation';
 
 interface Region {
@@ -45,6 +56,14 @@ export default function ProjectRegionsPage() {
   const [regionToDelete, setRegionToDelete] = useState<Region | null>(null);
   const [openPreview, setOpenPreview] = useState(false);
   const [previewProject, setPreviewProject] = useState<Project | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [targetCurrency, setTargetCurrency] = useState('CNY');
+  const [exchangeRates, setExchangeRates] = useState({
+    CNY: 1,
+    USD: 0.14,
+    EUR: 0.13,
+    GBP: 0.11
+  });
   const [newRegion, setNewRegion] = useState<Omit<Region, 'id' | 'createdAt' | 'updatedAt'>>({
     name: '',
     description: '',
@@ -55,12 +74,24 @@ export default function ProjectRegionsPage() {
   const [pageSize, setPageSize] = useState(10);
   const [searchName, setSearchName] = useState('');
 
-// 2. 添加处理函数（第130行左右，其他处理函数后面）
   const handleOpenPreview = (project: Project) => {
     setPreviewProject(project);
     setOpenPreview(true);
   };
+  const handleExport = (
+    region: Region,
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    e.stopPropagation();
+    setExportDialogOpen(true);
+  };
 
+  const handleConfirmExport = () => {
+    // 执行导出逻辑
+    console.log('导出目标货币:', targetCurrency);
+    console.log('汇率设置:', exchangeRates);
+    setExportDialogOpen(false);
+  };
   const handleClosePreview = () => {
     setOpenPreview(false);
     setPreviewProject(null);
@@ -218,7 +249,9 @@ export default function ProjectRegionsPage() {
   const handleRowClick = (regionId: number) => {
     router.push(`/projects/${projectId}/${regionId}`);
   };
-
+  const handleRowHover = (regionId: number) => {
+    router.prefetch(`/projects/${projectId}/${regionId}`);
+  };
   if (!project) {
     return <Typography>项目不存在</Typography>;
   }
@@ -393,6 +426,7 @@ export default function ProjectRegionsPage() {
                   hover
                   sx={{ cursor: 'pointer' }}
                   onClick={() => handleRowClick(region.id)}
+                  onMouseEnter={() => handleRowHover(region.id)}
                 >
                   <TableCell>{region.id}</TableCell>
                   <TableCell>
@@ -439,6 +473,14 @@ export default function ProjectRegionsPage() {
                       <Tooltip title="预览小计">
                         <Analytics fontSize="small" />
                       </Tooltip>
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleExport(region, e)}
+                      sx={{ mr: 0.5 }}
+                      title="导出"
+                    >
+                      <Download fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
@@ -721,6 +763,46 @@ export default function ProjectRegionsPage() {
             <Button onClick={handleCreate} variant="contained">创建</Button>
           </DialogActions>
         </Dialog>
+
+        <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>导出设置</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>目标货币</InputLabel>
+              <Select
+                value={targetCurrency}
+                onChange={(e) => setTargetCurrency(e.target.value)}
+                label="目标货币"
+              >
+                <MenuItem value="CNY">人民币 (CNY)</MenuItem>
+                <MenuItem value="USD">美元 (USD)</MenuItem>
+                <MenuItem value="EUR">欧元 (EUR)</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>汇率设置 (转换为{targetCurrency})</Typography>
+            {Object.entries(exchangeRates).map(([currency, rate]) => (
+              <TextField
+                key={currency}
+                label={`${currency} 汇率`}
+                type="number"
+                value={rate}
+                onChange={(e) => setExchangeRates(prev => ({
+                  ...prev,
+                  [currency]: parseFloat(e.target.value) || 0
+                }))}
+                fullWidth
+                sx={{ mb: 1 }}
+                inputProps={{ step: 0.01 }}
+              />
+            ))}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setExportDialogOpen(false)}>取消</Button>
+            <Button onClick={handleConfirmExport} variant="contained">确认导出</Button>
+          </DialogActions>
+        </Dialog>
+
       </Paper>
     </Box>
   );

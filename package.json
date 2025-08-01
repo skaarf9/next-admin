@@ -12,6 +12,7 @@
     "seed": "ts-node --project prisma/tsconfig.seed.json prisma/seed.ts"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.19.0",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",

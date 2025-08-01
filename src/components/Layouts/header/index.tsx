@@ -5,13 +5,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSidebarContext } from "../sidebar/sidebar-context";
 import { MenuIcon } from "./icons";
-// import { Notification } from "./notification";
 import { ThemeToggleSwitch } from "./theme-toggle";
 import { UserInfo } from "./user-info";
+import { usePathname } from "next/navigation";
+const pageConfig = {
+  "/": { title: "Dashboard", description: "数据概览和统计分析" },
+  "/projects": { title: "Projects", description: "项目成本信息管理" },
+  "/brands": { title: "Brand", description: "品牌信息管理" },
+  "/product-pricings": { title: "Products", description: "产品信息管理" }
+};
 
 export function Header() {
   const { toggleSidebar, isMobile } = useSidebarContext();
+  const pathname = usePathname();
 
+  // 获取当前页面配置
+  // @ts-ignore
+  const currentPage = pageConfig[pathname] || pageConfig["/"];
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-stroke bg-white px-4 py-5 shadow-1 dark:border-stroke-dark dark:bg-gray-dark md:px-5 2xl:px-10">
       <button
@@ -36,9 +46,9 @@ export function Header() {
 
       <div className="max-xl:hidden">
         <h1 className="mb-0.5 text-heading-5 font-bold text-dark dark:text-white">
-          Dashboard
+          {currentPage.title}
         </h1>
-        <p className="font-medium">Next.js Admin Dashboard Solution</p>
+        <p className="font-medium">{currentPage.description}</p>
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-2 min-[375px]:gap-4">

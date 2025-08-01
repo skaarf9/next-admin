@@ -1,12 +1,49 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  TextField, Pagination, Box, Typography, InputAdornment, Chip,
-  Breadcrumbs, Link, Card, CardContent, Grid, Divider
-} from '@mui/material';
-import { Edit, Delete, Add, Search, Clear, ArrowBack, LocationOn, Business, History, Download, Visibility } from '@mui/icons-material';
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Pagination,
+  Box,
+  Typography,
+  InputAdornment,
+  Chip,
+  Breadcrumbs,
+  Link,
+  Card,
+  CardContent,
+  Grid,
+  Divider,
+  FormControl,
+  InputLabel,
+  Select, MenuItem
+} from "@mui/material";
+import {
+  Edit,
+  Delete,
+  Add,
+  Search,
+  Clear,
+  ArrowBack,
+  LocationOn,
+  Business,
+  History,
+  Download,
+  Visibility,
+  Upload
+} from "@mui/icons-material";
 import { useRouter, useParams } from 'next/navigation';
 
 interface Version {
@@ -41,7 +78,14 @@ export default function RegionVersionsPage() {
   const params = useParams();
   const projectId = params.projectId as string;
   const regionId = params.regionId as string;
-
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [targetCurrency, setTargetCurrency] = useState('CNY');
+  const [exchangeRates, setExchangeRates] = useState({
+    CNY: 1,
+    USD: 0.14,
+    EUR: 0.13,
+    GBP: 0.11
+  });
   const [project, setProject] = useState<Project | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [versions, setVersions] = useState<Version[]>([]);
@@ -200,6 +244,17 @@ export default function RegionVersionsPage() {
     // 这里可以增加下载计数
   };
 
+  const handleExport = (version: Version, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExportDialogOpen(true);
+  };
+
+  const handleConfirmExport = () => {
+    // 执行导出逻辑
+    console.log('导出目标货币:', targetCurrency);
+    console.log('汇率设置:', exchangeRates);
+    setExportDialogOpen(false);
+  };
   const handlePreview = (version: Version, e: React.MouseEvent) => {
     e.stopPropagation();
     console.log('预览版本:', version);
@@ -232,6 +287,7 @@ export default function RegionVersionsPage() {
           component="button"
           variant="body1"
           onClick={() => router.push('/projects')}
+          onMouseEnter={() => router.prefetch(`/projects`)}
           sx={{ display: 'flex', alignItems: 'center' }}
         >
           <Business sx={{ mr: 0.5 }} fontSize="inherit" />
@@ -241,6 +297,7 @@ export default function RegionVersionsPage() {
           component="button"
           variant="body1"
           onClick={() => router.push(`/projects/${projectId}`)}
+          onMouseEnter={() => router.prefetch(`/projects/${projectId}`)}
           sx={{ display: 'flex', alignItems: 'center' }}
         >
           <LocationOn sx={{ mr: 0.5 }} fontSize="inherit" />
@@ -295,6 +352,7 @@ export default function RegionVersionsPage() {
               variant="outlined"
               startIcon={<ArrowBack />}
               onClick={() => router.push(`/projects/${projectId}`)}
+              onMouseEnter={() => router.prefetch(`/projects/${projectId}`)}
             >
               返回区域列表
             </Button>
@@ -449,18 +507,26 @@ export default function RegionVersionsPage() {
                       size="small"
                       onClick={(e) => handlePreview(version, e)}
                       sx={{ mr: 0.5 }}
-                      title="预览"
+                      title="阅览"
                     >
                       <Visibility fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={(e) => handleDownload(version, e)}
+                      onClick={(e) => handleExport(version, e)}
                       sx={{ mr: 0.5 }}
-                      title="下载"
+                      title="导出"
                       disabled={version.status === '草稿'}
                     >
                       <Download fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleUploadOriginal(version, e)}
+                      sx={{ mr: 0.5 }}
+                      title="上传原版"
+                    >
+                      <Upload fontSize="small" />
                     </IconButton>
                     <IconButton
                       size="small"
@@ -544,6 +610,44 @@ export default function RegionVersionsPage() {
           <DialogActions>
             <Button onClick={handleCloseAdd}>取消</Button>
             <Button onClick={handleCreate} variant="contained">创建</Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>导出设置</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>目标货币</InputLabel>
+              <Select
+                value={targetCurrency}
+                onChange={(e) => setTargetCurrency(e.target.value)}
+                label="目标货币"
+              >
+                <MenuItem value="CNY">人民币 (CNY)</MenuItem>
+                <MenuItem value="USD">美元 (USD)</MenuItem>
+                <MenuItem value="EUR">欧元 (EUR)</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>汇率设置 (转换为{targetCurrency})</Typography>
+            {Object.entries(exchangeRates).map(([currency, rate]) => (
+              <TextField
+                key={currency}
+                label={`${currency} 汇率`}
+                type="number"
+                value={rate}
+                onChange={(e) => setExchangeRates(prev => ({
+                  ...prev,
+                  [currency]: parseFloat(e.target.value) || 0
+                }))}
+                fullWidth
+                sx={{ mb: 1 }}
+                inputProps={{ step: 0.01 }}
+              />
+            ))}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setExportDialogOpen(false)}>取消</Button>
+            <Button onClick={handleConfirmExport} variant="contained">确认导出</Button>
           </DialogActions>
         </Dialog>
       </Paper>

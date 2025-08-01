@@ -7,7 +7,7 @@ import {
   Tooltip, Box, Typography, Grid, InputAdornment, FormControl, InputLabel,
   Chip, Tabs, Tab
 } from "@mui/material";
-import { Edit, Delete, Add, Search, Clear, FolderOpen } from '@mui/icons-material';
+import { Edit, Delete, Add, Search, Clear, FolderOpen, Download } from "@mui/icons-material";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useRouter } from 'next/navigation';
@@ -51,6 +51,15 @@ export default function ProjectsPage() {
   const [searchName, setSearchName] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  // 添加状态
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [targetCurrency, setTargetCurrency] = useState('CNY');
+  const [exchangeRates, setExchangeRates] = useState({
+    CNY: 1,
+    USD: 0.14,
+    EUR: 0.13,
+    GBP: 0.11
+  });
 
 
   // 2. 在组件内部添加状态映射（第45行左右，fetchProjects函数前）
@@ -101,7 +110,17 @@ export default function ProjectsPage() {
     setSelectedProject(project);
     setOpenEdit(true);
   };
+  const handleExport = (project: Project, e) => {
+    e.stopPropagation();
+    setExportDialogOpen(true);
+  };
 
+  const handleConfirmExport = () => {
+    // 执行导出逻辑
+    console.log('导出目标货币:', targetCurrency);
+    console.log('汇率设置:', exchangeRates);
+    setExportDialogOpen(false);
+  };
   const handleOpenDelete = (project: Project) => {
     setProjectToDelete(project);
     setOpenDelete(true);
@@ -411,6 +430,14 @@ export default function ProjectsPage() {
                     <Tooltip title="预览小计">
                       <Analytics fontSize="small" />
                     </Tooltip>
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleExport(project, e)}
+                    sx={{ mr: 0.5 }}
+                    title="导出"
+                  >
+                    <Download fontSize="small" />
                   </IconButton>
                   <IconButton
                     size="small"
@@ -869,6 +896,45 @@ export default function ProjectsPage() {
           <Button onClick={handleDelete} color="error" variant="contained">
             删除
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={exportDialogOpen} onClose={() => setExportDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>导出设置</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>目标货币</InputLabel>
+            <Select
+              value={targetCurrency}
+              onChange={(e) => setTargetCurrency(e.target.value)}
+              label="目标货币"
+            >
+              <MenuItem value="CNY">人民币 (CNY)</MenuItem>
+              <MenuItem value="USD">美元 (USD)</MenuItem>
+              <MenuItem value="EUR">欧元 (EUR)</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>汇率设置 (转换为{targetCurrency})</Typography>
+          {Object.entries(exchangeRates).map(([currency, rate]) => (
+            <TextField
+              key={currency}
+              label={`${currency} 汇率`}
+              type="number"
+              value={rate}
+              onChange={(e) => setExchangeRates(prev => ({
+                ...prev,
+                [currency]: parseFloat(e.target.value) || 0
+              }))}
+              fullWidth
+              sx={{ mb: 1 }}
+              inputProps={{ step: 0.01 }}
+            />
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExportDialogOpen(false)}>取消</Button>
+          <Button onClick={handleConfirmExport} variant="contained">确认导出</Button>
         </DialogActions>
       </Dialog>
     </Paper>
