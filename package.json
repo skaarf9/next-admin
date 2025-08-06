@@ -42,6 +42,7 @@
     "react-apexcharts": "^1.7.0",
     "react-datepicker": "^8.4.0",
     "react-dom": "19.0.0",
+    "react-pdf": "^10.0.1",
     "tailwind-merge": "^2.6.0",
     "xlsx": "^0.18.5"
   },
